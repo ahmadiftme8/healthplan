@@ -887,7 +887,9 @@ async function connectEmail() {
     await cloudClient.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: window.location.href
+        emailRedirectTo:
+          window.SUPABASE_CONFIG?.redirectUrl ||
+          window.location.href
       }
     });
 

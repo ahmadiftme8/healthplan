@@ -30,9 +30,9 @@
 
 ۳. در Authentication → Providers، گزینهٔ Anonymous را فعال کن.
 
-۴. در Authentication → URL Configuration، آدرس GitHub Pages یا Vercel را در Site URL و Redirect URLs اضافه کن.
+۴. در Authentication → URL Configuration، `https://ahmadiftme8.github.io/healthplan/` را به‌عنوان Site URL تنظیم کن و همین آدرس را در Redirect URLs مجاز اضافه کن. برای توسعهٔ محلی نیز `http://127.0.0.1:5500/**` را جداگانه به Redirect URLs اضافه کن.
 
-۵. فایل `config.js` را با Project URL و کلید publishable/anon پروژه پر کن و `accountEmail` را روی `devftme@gmail.com` بگذار. کلید secret/service_role را هرگز در این پروژه قرار نده.
+۵. فایل `config.js` را با Project URL و کلید publishable/anon پروژه پر کن و `accountEmail` را روی `devftme@gmail.com` و `redirectUrl` را روی `https://ahmadiftme8.github.io/healthplan/` بگذار. کلید secret/service_role را هرگز در این پروژه قرار نده.
 
 ۶. فایل‌ها را commit و push کن.
 
