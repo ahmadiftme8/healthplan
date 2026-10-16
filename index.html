@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#315c4c" />
+  <title>مسیر وزن‌گیری من</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">مسیر آرام، منظم و قابل‌اندازه‌گیری</span>
+        <h1>مسیر وزن‌گیری من <span>🌿</span></h1>
+        <p>برنامهٔ غذا، تمرین و ثبت روزانه در یک داشبورد ساده؛ هر روز فقط یک قدم کوچک.</p>
+
+        <div class="cloud-bar">
+          <span id="cloudStatus">ذخیرهٔ محلی</span>
+          <input id="emailInput" type="email" placeholder="ایمیل برای همگام‌سازی" autocomplete="email" />
+          <button id="emailLogin" type="button">اتصال امن</button>
+        </div>
+      </div>
+
+      <button class="ghost-button" id="themeToggle" type="button" aria-label="تغییر حالت نمایش">☼</button>
+    </header>
+
+    <section class="snapshot-grid" aria-label="خلاصه وضعیت">
+      <article class="snapshot-card mint">
+        <span>BMI فعلی</span>
+        <strong>۱۵٫۱</strong>
+        <small>کم‌وزنی</small>
+      </article>
+
+      <article class="snapshot-card peach">
+        <span>هدف</span>
+        <strong>۵۰ <em>کیلو</em></strong>
+        <small>هدف پیشنهادی شما</small>
+      </article>
+
+      <article class="snapshot-card lavender">
+        <span>پیشرفت هفته</span>
+        <strong id="weekProgress">۰٪</strong>
+        <small id="weekProgressLabel">هنوز ثبت نشده</small>
+      </article>
+    </section>
+
+    <main>
+      <section class="panel week-panel">
+        <div class="section-heading">
+          <div>
+            <span class="section-kicker">برنامهٔ این هفته</span>
+            <h2>امروز را انتخاب کن</h2>
+          </div>
+
+          <button class="text-button" id="todayButton">رفتن به امروز</button>
+        </div>
+
+        <div class="day-tabs" id="dayTabs" role="tablist"></div>
+        <div class="day-summary" id="daySummary"></div>
+      </section>
+
+      <section class="content-grid">
+        <section class="panel meals-panel">
+          <div class="section-heading">
+            <div>
+              <span class="section-kicker">غذا</span>
+              <h2>وعده‌های امروز</h2>
+            </div>
+
+            <span class="pill" id="mealCount">۰ از ۴</span>
+          </div>
+
+          <div id="mealList" class="meal-list"></div>
+        </section>
+
+        <aside class="side-column">
+          <section class="panel check-panel">
+            <div class="section-heading">
+              <div>
+                <span class="section-kicker">حرکت</span>
+                <h2>تمرین امروز</h2>
+              </div>
+
+              <span class="pill green">۱۵ دقیقه</span>
+            </div>
+
+            <div id="workoutCard"></div>
+          </section>
+
+          <section class="panel mini-panel">
+            <div class="section-heading">
+              <div>
+                <span class="section-kicker">یادداشت سریع</span>
+                <h2>امروز چه حسی داری؟</h2>
+              </div>
+            </div>
+
+            <textarea id="dailyNote" placeholder="اشتها، انرژی، حال روحی یا هر چیزی که می‌خواهی یادت بماند..."></textarea>
+            <button class="primary-button full" id="saveNote">ذخیرهٔ یادداشت</button>
+          </section>
+        </aside>
+      </section>
+
+      <section class="panel tracking-panel">
+        <div class="section-heading">
+          <div>
+            <span class="section-kicker">ردیابی</span>
+            <h2>گزارش روند</h2>
+          </div>
+
+          <button class="text-button" id="exportButton">خروجی گزارش</button>
+        </div>
+
+        <div class="tracking-grid">
+          <div class="weight-entry">
+            <label for="weightInput">
+              وزن امروز <small>(کیلوگرم)</small>
+            </label>
+
+            <div class="input-row">
+              <input id="weightInput" type="number" inputmode="decimal" min="1" max="300" step="۰٫۱" placeholder="۴۰٫۰" />
+              <button class="primary-button" id="saveWeight">ثبت</button>
+            </div>
+
+            <p id="weightMessage" class="helper"></p>
+          </div>
+
+          <div class="chart-wrap">
+            <canvas id="weightChart" width="600" height="220" aria-label="نمودار وزن"></canvas>
+            <p id="chartEmpty" class="chart-empty">هنوز داده‌ای برای نمودار ثبت نشده است.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel notes-panel">
+        <div class="section-heading">
+          <div>
+            <span class="section-kicker">دفترچه</span>
+            <h2>یادداشت‌های من</h2>
+          </div>
+
+          <span class="pill" id="noteCount">۰ یادداشت</span>
+        </div>
+
+        <div id="notesList" class="notes-list"></div>
+      </section>
+
+      <section class="safety-card">
+        <strong>یادآوری مهم</strong>
+        <p>
+          این ابزار آموزشی است. با BMI پایین و سابقهٔ بی‌اشتهایی، پیگیری پزشک و متخصص تغذیه را در اولویت بگذار.
+          هدف این برنامه نظم و تغذیهٔ کافی است، نه فشار برای افزایش سریع وزن.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      با اتصال امن، داده‌ها بین دستگاه‌ها همگام می‌شوند. بدون اتصال، اطلاعات فقط در همین مرورگر ذخیره می‌ماند.
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
