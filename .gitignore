@@ -1,2 +1,3 @@
 # Optional local override; keep the example file committed.
 config.local.js
+.env

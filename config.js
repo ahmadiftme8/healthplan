@@ -3,5 +3,6 @@
 
 window.SUPABASE_CONFIG = {
   url: "https://pznmaepcmkftanuexuwg.supabase.co",
-  anonKey: "sb_publishable_ZWojnPlXEfRY0IKds2KqCw_RUfDgdFI"
+  anonKey: "sb_publishable_ZWojnPlXEfRY0IKds2KqCw_RUfDgdFI",
+  accountEmail: "devftme@gmail.com"
 };

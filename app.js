@@ -23,6 +23,7 @@ let cloudClient = null;
 let cloudUser = null;
 let syncTimer = null;
 let cloudReady = false;
+let cloudChannel = null;
 
 const dayNames = [
   "شنبه",
@@ -687,8 +688,51 @@ async function syncToCloud() {
   );
 }
 
+function applyCloudData(data, updatedAt) {
+  const remoteUpdated =
+    data?.updatedAt ||
+    Date.parse(updatedAt || "") ||
+    0;
+
+  if (!data || remoteUpdated <= state.updatedAt) {
+    return;
+  }
+
+  Object.assign(state, data);
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(state)
+  );
+  render();
+}
+
+function subscribeToCloudChanges() {
+  cloudChannel = cloudClient
+    .channel(`user-data-${cloudUser.id}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "user_data",
+        filter: `user_id=eq.${cloudUser.id}`
+      },
+      ({ new: row }) => {
+        if (row?.data) {
+          applyCloudData(row.data, row.updated_at);
+        }
+      }
+    )
+    .subscribe();
+}
+
 async function initCloud() {
   const config = window.SUPABASE_CONFIG || {};
+  const emailInput = document.getElementById("emailInput");
+
+  if (emailInput) {
+    emailInput.value = config.accountEmail || "";
+  }
 
   if (
     !config.url ||
@@ -740,23 +784,13 @@ async function initCloud() {
       throw error;
     }
 
-    const remoteUpdated =
-      remote?.data?.updatedAt ||
-      Date.parse(remote?.updated_at || "") ||
-      0;
-
     if (
       remote?.data &&
-      remoteUpdated > state.updatedAt
+      (remote.data.updatedAt ||
+        Date.parse(remote.updated_at || "") ||
+        0) > state.updatedAt
     ) {
-      Object.assign(state, remote.data);
-
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(state)
-      );
-
-      render();
+      applyCloudData(remote.data, remote.updated_at);
 
       setCloudStatus(
         "دادهٔ ابری بارگذاری شد",
@@ -765,6 +799,8 @@ async function initCloud() {
     } else if (state.updatedAt) {
       await syncToCloud();
     }
+
+    subscribeToCloudChanges();
 
     setCloudStatus(
       cloudUser.is_anonymous
@@ -786,6 +822,8 @@ async function initCloud() {
 }
 
 async function connectEmail() {
+  const email = window.SUPABASE_CONFIG?.accountEmail;
+
   if (!cloudClient) {
     toast(
       "اول آدرس Supabase را در config.js وارد کن"
@@ -793,13 +831,8 @@ async function connectEmail() {
     return;
   }
 
-  const email = document
-    .getElementById("emailInput")
-    .value
-    .trim();
-
   if (!email || !email.includes("@")) {
-    toast("یک ایمیل معتبر وارد کن");
+    toast("ایمیل حساب را در config.js تنظیم کن");
     return;
   }
 
