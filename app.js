@@ -1,4 +1,5 @@
 const STORAGE_KEY = "weightJourney_v2";
+const ACCOUNT_EMAIL = "devftme@gmail.com";
 const initialState = {
   selectedDay: 0,
   meals: {},
@@ -24,6 +25,7 @@ let cloudUser = null;
 let syncTimer = null;
 let cloudReady = false;
 let cloudChannel = null;
+let cloudLoadingUserId = null;
 
 const dayNames = [
   "شنبه",
@@ -707,6 +709,10 @@ function applyCloudData(data, updatedAt) {
 }
 
 function subscribeToCloudChanges() {
+  if (cloudChannel) {
+    cloudClient.removeChannel(cloudChannel);
+  }
+
   cloudChannel = cloudClient
     .channel(`user-data-${cloudUser.id}`)
     .on(
@@ -726,12 +732,79 @@ function subscribeToCloudChanges() {
     .subscribe();
 }
 
+async function loadCloudUser(user) {
+  if (!user) {
+    throw new Error("No authenticated user");
+  }
+
+  if (
+    cloudUser?.id === user.id &&
+    (cloudReady || cloudLoadingUserId === user.id)
+  ) {
+    return;
+  }
+
+  cloudUser = user;
+  cloudReady = false;
+  cloudLoadingUserId = user.id;
+
+  if (cloudChannel) {
+    cloudClient.removeChannel(cloudChannel);
+    cloudChannel = null;
+  }
+
+  try {
+    const { data: remote, error } = await cloudClient
+      .from("user_data")
+      .select("data,updated_at")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (cloudUser?.id !== user.id) {
+      return;
+    }
+
+    if (
+      remote?.data &&
+      (remote.data.updatedAt ||
+        Date.parse(remote.updated_at || "") ||
+        0) > state.updatedAt
+    ) {
+      applyCloudData(remote.data, remote.updated_at);
+    } else if (state.updatedAt) {
+      await syncToCloud();
+    }
+
+    cloudReady = true;
+    subscribeToCloudChanges();
+    setCloudStatus(
+      user.is_anonymous
+        ? "حساب موقت · برای دستگاه دیگر ایمیل وصل کن"
+        : `واردشده با ${ACCOUNT_EMAIL} · همگام‌سازی فعال`,
+      "ok"
+    );
+  } catch (error) {
+    if (cloudUser?.id === user.id) {
+      cloudUser = null;
+    }
+    throw error;
+  } finally {
+    if (cloudLoadingUserId === user.id) {
+      cloudLoadingUserId = null;
+    }
+  }
+}
+
 async function initCloud() {
   const config = window.SUPABASE_CONFIG || {};
   const emailInput = document.getElementById("emailInput");
 
   if (emailInput) {
-    emailInput.value = config.accountEmail || "";
+    emailInput.value = config.accountEmail || ACCOUNT_EMAIL;
   }
 
   if (
@@ -751,6 +824,26 @@ async function initCloud() {
       config.anonKey
     );
 
+    cloudClient.auth.onAuthStateChange((event, session) => {
+      if (
+        event !== "SIGNED_IN" ||
+        !session?.user ||
+        session.user.is_anonymous
+      ) {
+        return;
+      }
+
+      window.setTimeout(() => {
+        loadCloudUser(session.user).catch(error => {
+          console.warn("Supabase sign-in sync failed", error);
+          setCloudStatus(
+            "ورود انجام شد · بارگذاری داده ناموفق",
+            "error"
+          );
+        });
+      }, 0);
+    });
+
     let { data: sessionData } =
       await cloudClient.auth.getSession();
 
@@ -765,49 +858,7 @@ async function initCloud() {
       sessionData = result.data;
     }
 
-    cloudUser = sessionData.session?.user;
-
-    if (!cloudUser) {
-      throw new Error("No authenticated user");
-    }
-
-    cloudReady = true;
-
-    const { data: remote, error } =
-      await cloudClient
-        .from("user_data")
-        .select("data,updated_at")
-        .eq("user_id", cloudUser.id)
-        .maybeSingle();
-
-    if (error) {
-      throw error;
-    }
-
-    if (
-      remote?.data &&
-      (remote.data.updatedAt ||
-        Date.parse(remote.updated_at || "") ||
-        0) > state.updatedAt
-    ) {
-      applyCloudData(remote.data, remote.updated_at);
-
-      setCloudStatus(
-        "دادهٔ ابری بارگذاری شد",
-        "ok"
-      );
-    } else if (state.updatedAt) {
-      await syncToCloud();
-    }
-
-    subscribeToCloudChanges();
-
-    setCloudStatus(
-      cloudUser.is_anonymous
-        ? "حساب موقت · برای دستگاه دیگر ایمیل وصل کن"
-        : "همگام‌سازی فعال",
-      "ok"
-    );
+    await loadCloudUser(sessionData.session?.user);
   } catch (error) {
     console.warn(
       "Supabase sync unavailable",
@@ -822,17 +873,13 @@ async function initCloud() {
 }
 
 async function connectEmail() {
-  const email = window.SUPABASE_CONFIG?.accountEmail;
+  const email =
+    window.SUPABASE_CONFIG?.accountEmail || ACCOUNT_EMAIL;
 
   if (!cloudClient) {
     toast(
       "اول آدرس Supabase را در config.js وارد کن"
     );
-    return;
-  }
-
-  if (!email || !email.includes("@")) {
-    toast("ایمیل حساب را در config.js تنظیم کن");
     return;
   }
 
